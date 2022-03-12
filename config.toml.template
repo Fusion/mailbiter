@@ -1,0 +1,58 @@
+# Actions can be declared, then used and re-used.
+# It is also possible to create an action directly in a rule by using 'action' rather than 'actionnames'
+
+# Possible syntax:
+#
+# [[rowrule]]
+# condition = """
+# sender contains 'creditor' and subject contains 'overdue'
+# """
+# actions = ["delete"]
+#
+# [[rowrule]]
+# condition = "subject contains 'nigerian prince'"
+# actions = ["move to investment"]
+#
+# ...
+#
+# condition = "date - calendar('2020-02-01') > duration('24h')"
+# condition = "now - date > duration('24h') and sender != 'chris@example.com'
+# condition = "date < calendar('2020-02-03') and date > calendar('2020-02-01')"
+#
+# condition = "'Seen' in flags"
+#
+# etc.
+
+[[profile]]
+    [profile.settings]
+    secretname = "user_profile_name"
+    maxprocessed = 33
+
+    [profile.actions]
+        [profile.actions.its_a_status]
+        disp = ["move to 'weekly status'"]
+    
+    [[profile.rowrule]]
+    condition = "sender contains 'AWS Notifications' and subject contains 'CPU Utilization'"
+    actions = ["move to 'Clutter'"]
+
+    [[profile.rowrule]]
+    condition = "sender contains '@tma.com.vn' and lower(subject) contains 'report'"
+    actionnames = ["its_a_status"]
+
+    [[profile.rowrule]]
+    condition = "lower(subject) contains 'weekly' and lower(subject) contains 'report'"
+    actionnames = ["its_a_status"]
+
+    [[profile.rowrule]]
+    condition = "sender contains 'software release mgr account'"
+    actions = ["delete"]
+
+[[profile]]
+    [profile.settings]
+    secretname = "another_profile_name"
+    maxprocessed = 10
+
+    [[profile.rowrule]]
+    condition = "sender contains 'Facebook' and subject contains 'posted'"
+    actions = ["info"]
