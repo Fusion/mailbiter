@@ -1,7 +1,10 @@
 package config
 
 import (
+	"log"
+
 	"github.com/fusion/mailbiter/secret"
+	"github.com/hydronica/toml"
 )
 
 type Actions struct {
@@ -28,5 +31,38 @@ type Profile struct {
 }
 
 type Config struct {
-	Profile []Profile
+	DebugLevel uint8
+	Profile    []Profile
+}
+
+func GetConfig(configFile string) *Config {
+	var config Config
+	if _, err := toml.DecodeFile(configFile, &config); err != nil {
+		log.Fatal(err)
+	}
+	var secret secret.Secret
+	if _, err := toml.DecodeFile("secret.toml", &secret); err != nil {
+		log.Fatal(err)
+	}
+	for idx, _ := range config.Profile {
+		account, ok := secret.Account[config.Profile[idx].Settings.SecretName]
+		if !ok {
+			log.Fatal("Configuration error -- Unknown secret for account:", config.Profile[idx].Settings.SecretName)
+		}
+		config.Profile[idx].Account = account
+	}
+	return &config
+}
+
+func ValidateConfig(cfg *Config) {
+	for _, profile := range cfg.Profile {
+		for _, rule := range profile.RowRule {
+			for _, actionname := range rule.ActionNames {
+				_, ok := profile.Actions[actionname]
+				if !ok {
+					log.Fatal("Configuration error -- Unknown action:", actionname)
+				}
+			}
+		}
+	}
 }
