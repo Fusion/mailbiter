@@ -32,16 +32,18 @@ type Profile struct {
 
 type Config struct {
 	DebugLevel uint8
+	Polling    uint32
 	Profile    []Profile
 }
 
-func GetConfig(configFile string) *Config {
+func GetConfig(configFile string, secretFile string) *Config {
 	var config Config
+
 	if _, err := toml.DecodeFile(configFile, &config); err != nil {
 		log.Fatal(err)
 	}
 	var secret secret.Secret
-	if _, err := toml.DecodeFile("secret.toml", &secret); err != nil {
+	if _, err := toml.DecodeFile(secretFile, &secret); err != nil {
 		log.Fatal(err)
 	}
 	for idx, _ := range config.Profile {
@@ -51,6 +53,11 @@ func GetConfig(configFile string) *Config {
 		}
 		config.Profile[idx].Account = account
 	}
+
+	if config.Polling == 0 {
+		config.Polling = 60
+	}
+
 	return &config
 }
 

@@ -17,34 +17,39 @@ import (
 	"github.com/fusion/mailbiter/messageinfo"
 )
 
-func Execute(cfg *config.Config) {
+type Core struct {
+	debugLevel uint8
+}
+
+func (core Core) Execute(cfg *config.Config) {
+	core.debugLevel = cfg.DebugLevel
 
 	for _, profile := range cfg.Profile {
-		profileWork(cfg.DebugLevel, &profile)
+		core.profileWork(&profile)
 	}
 
 }
 
-func profileWork(debugLevel uint8, profile *config.Profile) {
+func (core Core) profileWork(profile *config.Profile) {
 
-	if debugLevel > 0 {
-		log.Println("Profile:", profile.Settings.SecretName)
-	}
-	readClient := mail.Login(debugLevel, profile)
+	log.Println("Profile:", profile.Settings.SecretName)
+	readClient := mail.Login(core.debugLevel, profile)
 	defer (*readClient).Logout()
-	writeClient := mail.Login(debugLevel, profile)
+	writeClient := mail.Login(core.debugLevel, profile)
 	defer (*writeClient).Logout()
-	clients := &clients.Clients{readClient, writeClient}
+	clients := &clients.Clients{
+		Read:  readClient,
+		Write: writeClient}
 
-	processFolder(debugLevel, profile, clients, "INBOX", profile.Settings.MaxProcessed)
+	core.processFolder(profile, clients, "INBOX", profile.Settings.MaxProcessed)
 }
 
-func processFolder(debugLevel uint8, cfg *config.Profile, c *clients.Clients, folderName string, cutoff uint32) {
-	mbox, err := c.Read.Select(folderName, false)
+func (core Core) processFolder(cfg *config.Profile, clients *clients.Clients, folderName string, cutoff uint32) {
+	mbox, err := clients.Read.Select(folderName, false)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if debugLevel > 1 {
+	if core.debugLevel > 1 {
 		log.Println("Flags for ", folderName, ":", mbox.Flags)
 	}
 
@@ -61,10 +66,10 @@ func processFolder(debugLevel uint8, cfg *config.Profile, c *clients.Clients, fo
 	messages := make(chan *imap.Message, 10)
 	done := make(chan error, 1)
 	go func() {
-		done <- c.Read.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope, imap.FetchFlags, imap.FetchUid}, messages)
+		done <- clients.Read.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope, imap.FetchFlags, imap.FetchUid}, messages)
 	}()
 
-	if debugLevel > 1 {
+	if core.debugLevel > 1 {
 		log.Println("Max ", cutoff, " messages:")
 	}
 	for msg := range messages {
@@ -133,14 +138,14 @@ func processFolder(debugLevel uint8, cfg *config.Profile, c *clients.Clients, fo
 			Subject:    msg.Envelope.Subject,
 			Flags:      flags,
 		}
-		processMessage(debugLevel, cfg, c.Write, folderName, messageInfo)
+		core.processMessage(cfg, clients.Write, folderName, messageInfo)
 	}
 
 	if err := <-done; err != nil {
 		log.Fatal(err)
 	}
 
-	if debugLevel > 0 {
+	if core.debugLevel > 0 {
 		log.Println("Done!")
 	}
 
@@ -158,7 +163,7 @@ func makeEmailAddress(address *imap.Address) string {
 		address.HostName)
 }
 
-func processMessage(debugLevel uint8, cfg *config.Profile, c *client.Client, folderName string, message messageinfo.MessageInfo) {
+func (core Core) processMessage(cfg *config.Profile, client *client.Client, folderName string, message messageinfo.MessageInfo) {
 	env := map[string]interface{}{
 		"lower":    exprhelpers.Lower,
 		"calendar": exprhelpers.Date,
@@ -184,33 +189,33 @@ func processMessage(debugLevel uint8, cfg *config.Profile, c *client.Client, fol
 	for _, rule := range cfg.RowRule {
 		out, err := expr.Eval(rule.Condition, env)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		if out == false {
 			continue
 		}
 		// So, we matched a rule.
 		for _, action := range rule.Actions {
-			performAction(debugLevel, cfg, c, folderName, message, action)
+			core.performAction(cfg, client, folderName, message, action)
 		}
 		for _, actionname := range rule.ActionNames {
 			action := cfg.Actions[actionname]
 			for _, disp := range action.Disp {
-				performAction(debugLevel, cfg, c, folderName, message, disp)
+				core.performAction(cfg, client, folderName, message, disp)
 			}
 		}
 	}
 }
 
-func performAction(debugLevel uint8, cfg *config.Profile, c *client.Client, folderName string, message messageinfo.MessageInfo, action string) {
-	if debugLevel > 1 {
+func (core Core) performAction(cfg *config.Profile, client *client.Client, folderName string, message messageinfo.MessageInfo, action string) {
+	if core.debugLevel > 1 {
 		log.Println(message.Uid, message.Subject, "->", action)
 	}
 	if action == "info" {
 		return
 	}
 	if action == "delete" {
-		mail.DeleteMsg(cfg, c, folderName, message.Uid)
+		mail.DeleteMsg(cfg, client, folderName, message.Uid)
 		return
 	}
 	if action == "inspect" {
@@ -219,23 +224,23 @@ func performAction(debugLevel uint8, cfg *config.Profile, c *client.Client, fold
 	}
 	if strings.HasPrefix(action, "move to ") {
 		dest := unquote(strings.TrimPrefix(action, "move to "))
-		mail.MoveMsg(cfg, c, folderName, message.Uid, dest)
+		mail.MoveMsg(cfg, client, folderName, message.Uid, dest)
 		return
 	}
 	if strings.HasPrefix(action, "copy to ") {
 		dest := unquote(strings.TrimPrefix(action, "copy to "))
-		mail.CopyMsg(cfg, c, folderName, message.Uid, dest)
+		mail.CopyMsg(cfg, client, folderName, message.Uid, dest)
 		return
 	}
 	if strings.HasPrefix(action, "set flag ") {
 		flagName := unquote(strings.TrimPrefix(action, "flag "))
-		mail.ToggleMsgFlag(cfg, c, folderName, message.Uid, mail.SET, flagName)
+		mail.ToggleMsgFlag(cfg, client, folderName, message.Uid, mail.SET, flagName)
 		return
 	}
 	if strings.HasPrefix(action, "run ") {
 		// TODO
 		script := unquote(strings.TrimPrefix(action, "run "))
-		if debugLevel < 1 {
+		if core.debugLevel < 1 {
 			log.Println(script)
 		}
 		return

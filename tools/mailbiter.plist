@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC -//Apple//DTD PLIST 1.0//EN
+           http://www.apple.com/DTDs/PropertyList-1.0.dtd >
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.voilaweb.mailbiter</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/Users/chris/Projects/mailbiter/dist/mailbiter</string>
+      <string>-service</string>
+      <string>-config</string>
+      <string>/Users/chris/Projects/mailbiter/config.toml</string>
+      <string>-secret</string>
+      <string>/Users/chris/Projects/mailbiter/secret.toml</string>
+    </array>
+    <key>KeepAlive</key>
+    <true />
+  </dict>
+</plist>

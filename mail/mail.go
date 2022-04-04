@@ -41,41 +41,41 @@ func Login(debugLevel uint8, cfg *config.Profile) *client.Client {
 	return c
 }
 
-func MoveMsg(cfg *config.Profile, c *client.Client, sourceFolder string, uid uint32, destFolder string) {
+func MoveMsg(cfg *config.Profile, client *client.Client, sourceFolder string, uid uint32, destFolder string) {
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uid)
-	if _, err := c.Select(sourceFolder, false); err != nil {
+	if _, err := client.Select(sourceFolder, false); err != nil {
 		log.Fatal(err)
 	}
-	if err := c.UidMove(seqset, destFolder); err != nil {
+	if err := client.UidMove(seqset, destFolder); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func CopyMsg(cfg *config.Profile, c *client.Client, sourceFolder string, uid uint32, destFolder string) {
+func CopyMsg(cfg *config.Profile, client *client.Client, sourceFolder string, uid uint32, destFolder string) {
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uid)
-	if _, err := c.Select(sourceFolder, false); err != nil {
+	if _, err := client.Select(sourceFolder, false); err != nil {
 		log.Fatal(err)
 	}
-	if err := c.UidCopy(seqset, destFolder); err != nil {
+	if err := client.UidCopy(seqset, destFolder); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func DeleteMsg(cfg *config.Profile, c *client.Client, workFolder string, uid uint32) {
+func DeleteMsg(cfg *config.Profile, client *client.Client, workFolder string, uid uint32) {
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uid)
-	if _, err := c.Select(workFolder, false); err != nil {
+	if _, err := client.Select(workFolder, false); err != nil {
 		log.Fatal(err)
 	}
 	item := imap.FormatFlagsOp(imap.AddFlags, true)
 	flags := []interface{}{imap.DeletedFlag}
-	if err := c.UidStore(seqset, item, flags, nil); err != nil {
+	if err := client.UidStore(seqset, item, flags, nil); err != nil {
 		log.Fatal(err)
 	}
 	// Delete immediately. Surely expuging only once per session would be an improvement.
-	if err := c.Expunge(nil); err != nil {
+	if err := client.Expunge(nil); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -83,15 +83,15 @@ func DeleteMsg(cfg *config.Profile, c *client.Client, workFolder string, uid uin
 // DO NOT DOCUMENT.
 // For the time being, this will be considered an easter egg more than anything else.
 // If a flag does not exist, even when arbitrary flags are allowed, this will fail.
-func ToggleMsgFlag(cfg *config.Profile, c *client.Client, workFolder string, uid uint32, action Action, flagName string) {
+func ToggleMsgFlag(cfg *config.Profile, client *client.Client, workFolder string, uid uint32, action Action, flagName string) {
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uid)
-	if _, err := c.Select(workFolder, false); err != nil {
+	if _, err := client.Select(workFolder, false); err != nil {
 		log.Fatal(err)
 	}
 	item := imap.FormatFlagsOp(imap.AddFlags, true)
 	flags := []interface{}{fmt.Sprintf("\\%s", flagName)}
-	if err := c.UidStore(seqset, item, flags, nil); err != nil {
+	if err := client.UidStore(seqset, item, flags, nil); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -100,11 +100,11 @@ func ToggleMsgFlag(cfg *config.Profile, c *client.Client, workFolder string, uid
  * BELOW: UNUSED -- FOR TESTING PURPOSE ONLY
  */
 
-func getMailboxes(c *client.Client) {
+func getMailboxes(client *client.Client) {
 	mailboxes := make(chan *imap.MailboxInfo, 10)
 	done := make(chan error, 1)
 	go func() {
-		done <- c.List("", "*", mailboxes)
+		done <- client.List("", "*", mailboxes)
 	}()
 
 	log.Println("Mailboxes:")
@@ -117,8 +117,8 @@ func getMailboxes(c *client.Client) {
 	}
 }
 
-func getInbox(c *client.Client, folder string) {
-	mbox, err := c.Select(folder, false)
+func getInbox(client *client.Client, folder string) {
+	mbox, err := client.Select(folder, false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -139,7 +139,7 @@ func getInbox(c *client.Client, folder string) {
 	messages := make(chan *imap.Message, 10)
 	done := make(chan error, 1)
 	go func() {
-		done <- c.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope, imap.FetchFlags, imap.FetchUid}, messages)
+		done <- client.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope, imap.FetchFlags, imap.FetchUid}, messages)
 	}()
 
 	log.Println("Last ", maxMsg, " messages:")

@@ -1,0 +1,13 @@
+[Unit]
+Description=MailBiter Service
+Documentation=https://github.com/fusion/mailbiter
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/mailbiter -s
+StandardOutput=null
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=mailbiter.service
