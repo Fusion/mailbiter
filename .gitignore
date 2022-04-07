@@ -3,3 +3,7 @@ secret.toml
 mailbiter
 
 dist/
+
+*.log
+*.pid
+*.out
