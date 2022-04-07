@@ -32,7 +32,7 @@ release:
   prerelease: false
   github:
     owner: fusion
-    repo:  mailbiter
+    name:  mailbiter
   header: |
     ## Release {{ .Tag }} on {{ .Date }}
     
