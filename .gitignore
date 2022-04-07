@@ -1,3 +1,5 @@
 config.toml
 secret.toml
 mailbiter
+
+dist/

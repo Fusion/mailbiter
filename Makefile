@@ -1,9 +1,13 @@
-VERSION ?= 1.0.0
-
 build:
-	@go build -ldflags "-s -w -X 'main.Version=$(VERSION)'" -o dist/mailbiter main.go
+	@goreleaser --snapshot --rm-dist
+
+dev:
+	@go run main.go -service
+
+release:
+	@goreleaser release
 
 fix_dependencies:
 	@go get -u golang.org/x/sys
 
-.PHONY: build fix_dependencies
+.PHONY: build release fix_dependencies

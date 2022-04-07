@@ -22,7 +22,7 @@ type Core struct {
 }
 
 func (core Core) Execute(cfg *config.Config) {
-	core.debugLevel = cfg.DebugLevel
+	core.debugLevel = cfg.Global.DebugLevel
 
 	for _, profile := range cfg.Profile {
 		core.profileWork(&profile)
@@ -34,8 +34,14 @@ func (core Core) profileWork(profile *config.Profile) {
 
 	log.Println("Profile:", profile.Settings.SecretName)
 	readClient := mail.Login(core.debugLevel, profile)
+	if readClient == nil {
+		return
+	}
 	defer (*readClient).Logout()
 	writeClient := mail.Login(core.debugLevel, profile)
+	if writeClient == nil {
+		return
+	}
 	defer (*writeClient).Logout()
 	clients := &clients.Clients{
 		Read:  readClient,

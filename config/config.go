@@ -7,6 +7,16 @@ import (
 	"github.com/hydronica/toml"
 )
 
+type Global struct {
+	DebugLevel  uint8
+	LogFileName string
+}
+
+type Service struct {
+	Polling     uint32
+	PidFileName string
+}
+
 type Actions struct {
 	Disp []string
 }
@@ -31,9 +41,9 @@ type Profile struct {
 }
 
 type Config struct {
-	DebugLevel uint8
-	Polling    uint32
-	Profile    []Profile
+	Global  Global
+	Service Service
+	Profile []Profile
 }
 
 func GetConfig(configFile string, secretFile string) *Config {
@@ -54,8 +64,14 @@ func GetConfig(configFile string, secretFile string) *Config {
 		config.Profile[idx].Account = account
 	}
 
-	if config.Polling == 0 {
-		config.Polling = 60
+	if config.Global.LogFileName == "" {
+		config.Global.LogFileName = "mailbiter.log"
+	}
+	if config.Service.Polling == 0 {
+		config.Service.Polling = 60
+	}
+	if config.Service.PidFileName == "" {
+		config.Service.PidFileName = "mailbiter.pid"
 	}
 
 	return &config

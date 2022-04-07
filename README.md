@@ -70,9 +70,7 @@ This basic syntax can be very powerful. Here are a few more examples:
 
 ## Urgent
 
-- Proper error handling
 - Filter more than just inbox
-- Implement command-line arguments
 
 ## Open points
 

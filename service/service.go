@@ -16,9 +16,9 @@ type mbService struct {
 
 func RunService(cfg *config.Config) {
 	cntxt := &daemon.Context{
-		PidFileName: "mailbiter.pid",
+		PidFileName: cfg.Service.PidFileName,
 		PidFilePerm: 0644,
-		LogFileName: "mailbiter.log",
+		LogFileName: cfg.Global.LogFileName,
 		LogFilePerm: 0640,
 		WorkDir:     "./",
 		Umask:       027,
@@ -36,7 +36,7 @@ func RunService(cfg *config.Config) {
 			core := core.Core{}
 			core.Execute(cfg)
 
-			time.Sleep(time.Duration(cfg.Polling) * time.Second)
+			time.Sleep(time.Duration(cfg.Service.Polling) * time.Second)
 		}
 	}()
 

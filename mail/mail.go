@@ -25,7 +25,8 @@ func Login(debugLevel uint8, cfg *config.Profile) *client.Client {
 		fmt.Sprintf("%s:%d", cfg.Account.Host, cfg.Account.Port),
 		nil)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error:", err)
+		return nil
 	}
 	if debugLevel > 1 {
 		fmt.Print("Connected...")
@@ -33,7 +34,8 @@ func Login(debugLevel uint8, cfg *config.Profile) *client.Client {
 	if err := c.Login(
 		cfg.Account.Username,
 		cfg.Account.Password); err != nil {
-		log.Fatal(err)
+		fmt.Println("Error:", err)
+		return nil
 	}
 	if debugLevel > 1 {
 		fmt.Println("Logged in")
@@ -45,10 +47,12 @@ func MoveMsg(cfg *config.Profile, client *client.Client, sourceFolder string, ui
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uid)
 	if _, err := client.Select(sourceFolder, false); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", "select", err)
+		return
 	}
 	if err := client.UidMove(seqset, destFolder); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", "uidmove", err)
+		return
 	}
 }
 
@@ -56,10 +60,12 @@ func CopyMsg(cfg *config.Profile, client *client.Client, sourceFolder string, ui
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uid)
 	if _, err := client.Select(sourceFolder, false); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", "select", err)
+		return
 	}
 	if err := client.UidCopy(seqset, destFolder); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", "uidcopy", err)
+		return
 	}
 }
 
@@ -67,16 +73,19 @@ func DeleteMsg(cfg *config.Profile, client *client.Client, workFolder string, ui
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uid)
 	if _, err := client.Select(workFolder, false); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", "select", err)
+		return
 	}
 	item := imap.FormatFlagsOp(imap.AddFlags, true)
 	flags := []interface{}{imap.DeletedFlag}
 	if err := client.UidStore(seqset, item, flags, nil); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", "uidstore", err)
+		return
 	}
 	// Delete immediately. Surely expuging only once per session would be an improvement.
 	if err := client.Expunge(nil); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", "expunge", err)
+		return
 	}
 }
 
@@ -87,12 +96,14 @@ func ToggleMsgFlag(cfg *config.Profile, client *client.Client, workFolder string
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uid)
 	if _, err := client.Select(workFolder, false); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", "select", err)
+		return
 	}
 	item := imap.FormatFlagsOp(imap.AddFlags, true)
 	flags := []interface{}{fmt.Sprintf("\\%s", flagName)}
 	if err := client.UidStore(seqset, item, flags, nil); err != nil {
-		log.Fatal(err)
+		log.Println("Error:", "uidstore", err)
+		return
 	}
 }
 
