@@ -25,7 +25,7 @@ func Login(debugLevel uint8, cfg *config.Profile) *client.Client {
 		fmt.Sprintf("%s:%d", cfg.Account.Host, cfg.Account.Port),
 		nil)
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Println("Error:", err)
 		return nil
 	}
 	if debugLevel > 1 {
@@ -34,7 +34,7 @@ func Login(debugLevel uint8, cfg *config.Profile) *client.Client {
 	if err := c.Login(
 		cfg.Account.Username,
 		cfg.Account.Password); err != nil {
-		fmt.Println("Error:", err)
+		log.Println("Error:", err)
 		return nil
 	}
 	if debugLevel > 1 {

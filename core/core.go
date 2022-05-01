@@ -53,7 +53,8 @@ func (core Core) profileWork(profile *config.Profile) {
 func (core Core) processFolder(cfg *config.Profile, clients *clients.Clients, folderName string, cutoff uint32) {
 	mbox, err := clients.Read.Select(folderName, false)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error:", err)
+		return
 	}
 	if core.debugLevel > 1 {
 		log.Println("Flags for ", folderName, ":", mbox.Flags)
@@ -148,7 +149,8 @@ func (core Core) processFolder(cfg *config.Profile, clients *clients.Clients, fo
 	}
 
 	if err := <-done; err != nil {
-		log.Fatal(err)
+		log.Println("Error:", err)
+		return
 	}
 
 	if core.debugLevel > 0 {
@@ -195,7 +197,8 @@ func (core Core) processMessage(cfg *config.Profile, client *client.Client, fold
 	for _, rule := range cfg.RowRule {
 		out, err := expr.Eval(rule.Condition, env)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Error:", err)
+			continue
 		}
 		if out == false {
 			continue
@@ -251,7 +254,7 @@ func (core Core) performAction(cfg *config.Profile, client *client.Client, folde
 		}
 		return
 	}
-	log.Fatal("Unknown action:", action)
+	log.Println("Uknown action:", action)
 }
 
 func unquote(str string) string {
