@@ -1,3 +1,4 @@
+![](assets/mailbiter.png)
 # Overview
 
 Run this CLI application to easily handle the emails in your IMAP inbox (e.g. outlook365, gmail, etc.)
@@ -79,3 +80,7 @@ Should we also provide email size as a criterion?
 Sanity checks could be quickly performed before a run:
 - ensure that all actionnames reference actual action entries (done)
 - ensure that all accounts names reference actual account entries
+
+# Misc
+
+<div>Logo created by <a href="https://www.designevo.com/" title="Free Online Logo Maker">DesignEvo logo maker</a></div>
